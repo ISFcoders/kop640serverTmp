@@ -10,6 +10,11 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.16.4",
+<<<<<<< Updated upstream
     "web3": "1.0.0-beta.46"
+=======
+    "web3": "1.0.0-beta.46",
+    "web3-shh": "^1.0.0-beta.46"
+>>>>>>> Stashed changes
   }
 }
