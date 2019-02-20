@@ -27,7 +27,7 @@ const eContract = web3.eth.Contract(contractABI, contractAddress); // ! eth.Cont
 app.get('/fresh', function(req, res) {
     // eContract.events.OfferToSell({address: contractAddress, fromBlock:0, toBlock:'latest'}, function(error, result) { // ! { address, from, to }
     // console.log(eContract.events.OfferToBuy({filter: {}, fromBlock:0, toBlock:'latest'}));
-    eContract.events.OfferToBuy({filter: {}, fromBlock:0, toBlock:'latest'}, function(error, result) { // ! { address, from, to }
+    eContract.events.OfferToSell({filter: {}, fromBlock:0, toBlock:'latest'}, function(error, result) { // ! { address, from, to }
         // ! будет выполнено через несколько секунд...
         // console.log(result);
         // console.log(result);
@@ -37,7 +37,27 @@ app.get('/fresh', function(req, res) {
         // console.log(result.returnValues[1]);
     })
     .on('data', (event) => {
-        console.log(event); // same results as the optional callback above
+        // console.log(event); // same results as the optional callback above
+        // console.log(web3.eth.abi.encodeFunctionSignature('OfferToBuy(address,uint256,uint256)'));
+        // console.log('event.raw.topics = ', event.raw.topics[1]);
+        // console.log('event.signature = ', event.signature);
+
+        console.log(
+        web3.eth.abi.decodeLog([{
+            type: 'address',
+            name: 'seller',
+            indexed: true
+        },{
+            type: 'uint256',
+            name: 'valueLot',
+            // indexed: false
+        },{
+            type: 'uint256',
+            name: 'price',
+            // indexed: false
+        }],
+        event.raw.data,
+        event.raw.topics[1])); // ! topics[1] - has address
     })
     .on('changed', (event) => {
         // remove event from local database
