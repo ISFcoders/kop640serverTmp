@@ -5,7 +5,7 @@ const Express = require('express');
 // ###########################################################
 // var fs = require('fs');
 var util = require('util');
-var logFile = fs.createWriteStream('log.txt', { flags: 'a' });
+var logFile = fs.createWriteStream('offersToSell.ts', { flags: 'w' });
   // Or 'w' to truncate the file every time the process starts.
 var logStdout = process.stdout;
 
@@ -25,43 +25,72 @@ const contractABI = JSON.parse(fs.readFileSync('./abi/contractAbi6040.json','utf
 const eContract = web3.eth.Contract(contractABI, contractAddress); // ! eth.Contract
 
 app.get('/fresh', function(req, res) {
-    // eContract.events.OfferToSell({address: contractAddress, fromBlock:0, toBlock:'latest'}, function(error, result) { // ! { address, from, to }
-    // console.log(eContract.events.OfferToBuy({filter: {}, fromBlock:0, toBlock:'latest'}));
-    eContract.events.OfferToSell({filter: {}, fromBlock:0, toBlock:'latest'}, function(error, result) { // ! { address, from, to }
-        // ! будет выполнено через несколько секунд...
-        // console.log(result);
-        // console.log(result);
-        // console.log('error = ', error);
-        // console.log('result = ', result);
-        // console.log(result.returnValues);
-        // console.log(result.returnValues[1]);
-    })
-    .on('data', (event) => {
-        // console.log(event); // same results as the optional callback above
-        // console.log(web3.eth.abi.encodeFunctionSignature('OfferToBuy(address,uint256,uint256)'));
-        // console.log('event.raw.topics = ', event.raw.topics[1]);
-        // console.log('event.signature = ', event.signature);
 
-        console.log(
-        web3.eth.abi.decodeLog([{
-            type: 'address',
-            name: 'seller',
-            indexed: true
-        },{
-            type: 'uint256',
-            name: 'valueLot',
-            // indexed: false
-        },{
-            type: 'uint256',
-            name: 'price',
-            // indexed: false
-        }],
-        event.raw.data,
-        event.raw.topics[1])); // ! topics[1] - has address
-    })
-    .on('changed', (event) => {
-        // remove event from local database
-    });
+    getEvents();
+
+    async function getEvents() {
+        eContract.events.OfferToSell({filter: {}, fromBlock:0, toBlock:'latest'}, function(error, result) { })
+        .on('data', (event) => {
+
+            let eventsJSON = web3.eth.abi.decodeLog([{
+                type: 'address',
+                name: 'seller',
+                indexed: true
+            },{
+                type: 'uint256',
+                name: 'valueLot',
+                indexed: false
+            },{
+                type: 'uint256',
+                name: 'price',
+                indexed: false
+            }],
+            event.raw.data,
+            event.raw.topics[1]); // ! topics[1] - has address
+
+            makeRequest(eventsJSON.seller);
+
+            // console.log(eventsJSON.seller);
+
+        })
+    }
+
+    async function makeRequest(seller) {
+        eContract.methods.showOffersToSell(seller).call({from: seller}, (err, result) => {
+            let allOffersToSell = [];
+            let index = 0;
+            if(result) {
+                allOffersToSell[index] = {
+                    seller: seller, 
+                    valueLot: result[1], 
+                    price: result[2], 
+                    status: result[0] 
+                };
+                console.log(allOffersToSell[index]);
+            index++;
+            }
+        });
+    }
+
+    // makeRequest();
+
+/*     let allOffersToSell;
+    eContract.methods.showOffersToSell(eventsJSON.seller).call((err, result) => {
+        console.log(result);
+            if (err != null) {
+            console.log('Error ' + err);
+          }
+          if (result[0]) {
+            allOffersToSell[index] = {
+              seller: eventsJSON.seller, 
+              valueLot: result[1], 
+              price: result[2], 
+              status: result[0] 
+            };
+        }
+    }); */
+
+
     res.send('/fresh');
 });
 
