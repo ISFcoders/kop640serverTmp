@@ -32,6 +32,7 @@ function init() {
     if (!fs.existsSync(fileOffersToSell)) {
         updateOffersToSell();
     }
+    setTimeout(requestAllOffersToSell, 500);
 }
 
 function updateOffersToSell() {
@@ -41,14 +42,14 @@ function updateOffersToSell() {
 
 function requestAllOffersToSell() {
     let allOffers = [];
+    let uniqueAderesses = new Set();
     getEvents();
-    setTimeout(updateOffersToSell, 9000);
+    setTimeout(updateOffersToSell, 5000);
     console.log('blockchain request: offersToSell');
 
     async function getEvents() {
         eContract.events
-            .OfferToSell({filter: {}, fromBlock: 0, toBlock: 'latest'}, function (error, result) {
-            })
+            .OfferToSell({filter: {}, fromBlock: 0, toBlock: 'latest'}, function (error, result) {})
             .on('data', (event) => {
                 let eventsJSON = web3.eth.abi.decodeLog(
                     [{
@@ -76,17 +77,17 @@ function requestAllOffersToSell() {
         eContract.methods
             .showOffersToSell(seller)
             .call({from: seller}, (err, result) => {
-                let allOffersToSell = [];
-                let index = 0;
                 if (result) {
-                    allOffersToSell[index] = {
+                    let item = {
                         seller: seller,
                         valueLot: result[1],
                         price: result[2],
                         status: result[0]
                     };
-                    allOffers[allOffers.length] = allOffersToSell[index];
-                    // console.log(allOffersToSell[index]);
+                    if (!uniqueAderesses.has(item.seller) && item.valueLot != 0 && item.price != 0) {
+                        uniqueAderesses.add(item.seller);
+                        allOffers.push(item);
+                    }
                 }
             });
     }
