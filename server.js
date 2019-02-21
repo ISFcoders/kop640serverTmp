@@ -25,7 +25,14 @@ const eContract = web3.eth.Contract(contractABI, contractAddress);
 const fileOffersToSell = "./data/offers-to-sell.json";
 let allOffersToSell = [];
 
+init();
 setInterval(requestAllOffersToSell, 50000);
+
+function init() {
+    if (!fs.existsSync(fileOffersToSell)) {
+        updateOffersToSell();
+    }
+}
 
 function updateOffersToSell() {
     fs.writeFileSync(fileOffersToSell, JSON.stringify(allOffersToSell));
@@ -91,7 +98,7 @@ app.get('/request/sell', function(req, res) {
 });
 
 app.get('/info', function(req, res) {
-    res.send(`Offers count: ${ allOffers.length } <br /> ${ JSON.stringify(allOffers) }`);
+    res.send(`Offers count: ${ allOffersToSell.length } <br /> ${ JSON.stringify(allOffersToSell) }`);
 });
 
 app.get('/getfile/sell', function(req, res) {
